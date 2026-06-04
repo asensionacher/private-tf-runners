@@ -1,0 +1,54 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - tf-registry-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    expose:
+      - "8080"
+    volumes:
+      - backend-data:/data
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=/data/runners.db
+    restart: unless-stopped
+    networks:
+      - tf-registry-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    expose:
+      - "80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=${API_URL}
+    networks:
+      - tf-registry-network
+volumes:
+  backend-data:
+    driver: local
+networks:
+  tf-registry-network:
+    external: true
+    name: tf-registry-network

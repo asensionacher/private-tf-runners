@@ -1,16 +1,21 @@
 services:
   nginx:
     image: nginx:alpine
-    container_name: nginx
+    container_name: private-tf-runners-nginx
     ports:
+      - "80:80"
       - "443:443"
+    environment:
+      - RUNNERS_FRONTEND_URL=${RUNNERS_FRONTEND_URL:-https://runners.lan}
+      - RUNNERS_API_URL=${RUNNERS_API_URL:-https://api.runners.lan}
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro
       - ./nginx/certs:/etc/nginx/certs:ro
+    command: sh -c "envsubst '$$RUNNERS_FRONTEND_URL $$RUNNERS_API_URL' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
     depends_on:
       - frontend
       - backend
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - tf-registry-network
 
@@ -18,7 +23,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: backend
+    container_name: private-tf-runners-backend
     expose:
       - "8080"
     volumes:
@@ -35,14 +40,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: frontend
+    container_name: private-tf-runners-frontend
     expose:
       - "80"
     depends_on:
       - backend
     restart: unless-stopped
     environment:
-      - VITE_API_URL=${API_URL}
+      - VITE_API_URL=${RUNNERS_API_URL}
     networks:
       - tf-registry-network
 volumes:

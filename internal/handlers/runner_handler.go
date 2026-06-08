@@ -763,15 +763,16 @@ func generateToken(length int) (string, error) {
 func (h *RunnerHandler) WaitForRun(c *gin.Context) {
 	runID := c.Param("id")
 
-	runnerFromToken, exists := c.Get("runner")
-	if !exists {
+	runnerFromToken, isRunner := c.Get("runner")
+	claims := middleware.GetClaims(c)
+
+	if !isRunner && claims == nil {
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
 			Error: "Unauthorized",
 			Code:  "UNAUTHORIZED",
 		})
 		return
 	}
-	runner := runnerFromToken.(*models.Runner)
 
 	timeoutStr := c.DefaultQuery("timeout", "30")
 	timeout := 30
@@ -795,12 +796,15 @@ func (h *RunnerHandler) WaitForRun(c *gin.Context) {
 		return
 	}
 
-	if run.RunnerID != runner.ID {
-		c.JSON(http.StatusForbidden, models.ErrorResponse{
-			Error: "Run is not assigned to this runner",
-			Code:  "FORBIDDEN",
-		})
-		return
+	if isRunner {
+		runner := runnerFromToken.(*models.Runner)
+		if run.RunnerID != runner.ID {
+			c.JSON(http.StatusForbidden, models.ErrorResponse{
+				Error: "Run is not assigned to this runner",
+				Code:  "FORBIDDEN",
+			})
+			return
+		}
 	}
 
 	if isTerminalStatus(run.Status) {

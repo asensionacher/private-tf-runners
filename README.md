@@ -50,11 +50,11 @@ On first run, a default admin user is created:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `SERVER_HOST` | Backend bind address | `0.0.0.0` |
-| `SERVER_PORT` | Backend port | `8080` |
-| `DATABASE_PATH` | SQLite database path | `./data/runners.db` |
+| `RUNNERS_SERVER_HOST` | Backend bind address | `0.0.0.0` |
+| `RUNNERS_SERVER_PORT` | Backend port | `8080` |
+| `RUNNERS_DATABASE_PATH` | SQLite database path | `./data/runners.db` |
 | `JWT_SECRET` | JWT signing secret | (required) |
-| `ENCRYPTION_KEY` | Data encryption key | (required) |
+| `RUNNERS_ENCRYPTION_KEY` | Data encryption key | (required) |
 
 ### Terraform Backend Support
 

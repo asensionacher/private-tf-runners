@@ -30,18 +30,18 @@ type DatabaseConfig struct {
 }
 
 type SecurityConfig struct {
-	JWTSecret          []byte
-	JWTExpiration      time.Duration
-	RefreshExpiration  time.Duration
-	CSRFSecret         []byte
-	RateLimitWindow    time.Duration
-	RateLimitMax       int
-	bcryptCost         int
-	MaxLoginAttempts   int
-	LockoutDuration    time.Duration
-	SecureCookie       bool
-	SessionCookieName  string
-	EncryptionKey      []byte
+	JWTSecret         []byte
+	JWTExpiration     time.Duration
+	RefreshExpiration time.Duration
+	CSRFSecret        []byte
+	RateLimitWindow   time.Duration
+	RateLimitMax      int
+	bcryptCost        int
+	MaxLoginAttempts  int
+	LockoutDuration   time.Duration
+	SecureCookie      bool
+	SessionCookieName string
+	EncryptionKey     []byte
 }
 
 var globalConfig *Config
@@ -64,15 +64,15 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		Server: ServerConfig{
-			Host:            getEnv("SERVER_HOST", "0.0.0.0"),
-			Port:            getEnv("SERVER_PORT", "8080"),
+			Host:            getEnv("RUNNERS_SERVER_HOST", "0.0.0.0"),
+			Port:            getEnv("RUNNERS_SERVER_PORT", "8080"),
 			ReadTimeout:     30 * time.Second,
 			WriteTimeout:    30 * time.Second,
 			ShutdownTimeout: 10 * time.Second,
 			FrontendURL:     getEnv("FRONTEND_URL", "http://localhost:5173"),
 		},
 		Database: DatabaseConfig{
-			Path: getEnv("DATABASE_PATH", "./data/runners.db"),
+			Path: getEnv("RUNNERS_DATABASE_PATH", "./data/runners.db"),
 		},
 		Security: SecurityConfig{
 			JWTSecret:         jwtSecret,

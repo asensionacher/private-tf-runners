@@ -282,11 +282,8 @@ var HTTP = BackendSchema{
 	OptionalFields: []Field{
 		{Key: "update_method", Description: "HTTP method to use when updating state", Required: false, Default: "POST", EnvVar: "TF_HTTP_UPDATE_METHOD"},
 		{Key: "lock_address", Description: "The address of the lock REST endpoint", Required: false, EnvVar: "TF_HTTP_LOCK_ADDRESS"},
-		{Key: "lock_method", Description: "HTTP method to use when locking", Required: false, Default: "LOCK", EnvVar: "TF_HTTP_LOCK_METHOD"},
 		{Key: "unlock_address", Description: "The address of the unlock REST endpoint", Required: false, EnvVar: "TF_HTTP_UNLOCK_ADDRESS"},
 		{Key: "unlock_method", Description: "HTTP method to use when unlocking", Required: false, Default: "UNLOCK", EnvVar: "TF_HTTP_UNLOCK_METHOD"},
-		{Key: "username", Description: "The username for HTTP basic authentication", Required: false, EnvVar: "TF_HTTP_USERNAME"},
-		{Key: "password", Description: "The password for HTTP basic authentication", Required: false, Sensitive: true, EnvVar: "TF_HTTP_PASSWORD"},
 		{Key: "skip_cert_verification", Description: "Whether to skip TLS verification", Required: false, Default: "false"},
 		{Key: "retry_max", Description: "The number of HTTP request retries", Required: false, Default: "2", EnvVar: "TF_HTTP_RETRY_MAX"},
 		{Key: "retry_wait_min", Description: "The minimum time in seconds to wait between HTTP request attempts", Required: false, Default: "1", EnvVar: "TF_HTTP_RETRY_WAIT_MIN"},

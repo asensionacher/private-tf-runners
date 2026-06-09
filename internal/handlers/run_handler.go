@@ -68,8 +68,10 @@ func (h *RunHandler) List(c *gin.Context) {
 func (h *RunHandler) Get(c *gin.Context) {
 	id := c.Param("id")
 
+	log.Printf("[DEBUG] Get run request for id=%s", id)
 	run, err := h.db.Run().GetByID(id)
 	if err != nil {
+		log.Printf("[DEBUG] Get run error for id=%s: %v", id, err)
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusNotFound, models.ErrorResponse{
 				Error: "Run not found",
@@ -83,6 +85,7 @@ func (h *RunHandler) Get(c *gin.Context) {
 		})
 		return
 	}
+	log.Printf("[DEBUG] Get run success for id=%s, status=%s, apply_output_len=%d", id, run.Status, len(run.ApplyOutput))
 
 	c.JSON(http.StatusOK, run)
 }

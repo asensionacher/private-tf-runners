@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ansiToHtml from 'ansi-to-html';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { a11yLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { runs, runners as runnersApi } from '../lib/api';
 import type { Run, Runner } from '../types';
 
@@ -311,19 +313,20 @@ export default function RunDetail() {
       {tfOutputs && Object.keys(tfOutputs).length > 0 && (
         <div className="card p-6 space-y-4">
           <h2 className="section-title">Terraform Outputs</h2>
-          <div className="space-y-3">
-            {Object.entries(tfOutputs).map(([key, output]) => (
-              <div key={key} className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700 last:border-0">
-                <span className="font-mono font-medium text-primary-600">{key}</span>
-                <div className="text-right">
-                  <span className="text-muted text-xs mr-2">{output.type}</span>
-                  <span className="font-mono text-sm">
-                    {typeof output.value === 'object' ? JSON.stringify(output.value) : String(output.value)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <SyntaxHighlighter
+            language="json"
+            style={a11yLight}
+            customStyle={{
+              backgroundColor: '#f8fafc',
+              borderRadius: '0.5rem',
+              padding: '1rem',
+              fontSize: '0.75rem',
+              maxHeight: '500px',
+              overflow: 'auto',
+            }}
+          >
+            {JSON.stringify(tfOutputs, null, 2)}
+          </SyntaxHighlighter>
         </div>
       )}
     </div>

@@ -91,6 +91,7 @@ stacks := protected.Group("/stacks")
 				runs.POST("/:id/assign", runnerHandler.AssignRun, middleware.RequirePermission(models.PermissionRunCreate))
 				runs.POST("/:id/approve", runnerHandler.ApproveRun, middleware.RequirePermission(models.PermissionRunCreate))
 				runs.POST("/:id/reject", runnerHandler.RejectRun, middleware.RequirePermission(models.PermissionRunCreate))
+				runs.POST("/:id/cancel", runnerHandler.CancelRun, middleware.RequirePermission(models.PermissionRunCreate))
 				runs.PUT("/:id/plan-output", runnerHandler.UpdatePlanOutput, middleware.RequirePermission(models.PermissionRunCreate))
 				runs.GET("/:id/wait", runnerHandler.WaitForRun, middleware.RequirePermission(models.PermissionRunRead))
 			}

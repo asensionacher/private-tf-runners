@@ -97,13 +97,43 @@ func (rc *RunnerClient) getAssignedRun() (*models.Run, error) {
 
 	for i := range runs {
 		log.Printf("[DEBUG] getAssignedRun: Found run %s with status %s", runs[i].ID, runs[i].Status)
-		if runs[i].Status == models.StatusPending || runs[i].Status == models.StatusApproved || runs[i].Status == models.StatusPlanned {
-			log.Printf("[DEBUG] getAssignedRun: Found pending/approved/planned run %s, will claim it", runs[i].ID)
+		if runs[i].Status == models.StatusPending || runs[i].Status == models.StatusApproved || runs[i].Status == models.StatusPlanned || runs[i].Status == models.StatusCanceled {
+			log.Printf("[DEBUG] getAssignedRun: Found pending/approved/planned/canceled run %s, will claim it", runs[i].ID)
 			return &runs[i], nil
 		}
 	}
 	log.Printf("[DEBUG] getAssignedRun: No pending/approved runs found")
 	return nil, nil
+}
+
+func (rc *RunnerClient) getAssignedRunByID(runID string) (*models.Run, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/runs/%s", rc.apiURL, runID), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+rc.token)
+
+	resp, err := rc.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("get run failed with status: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var run models.Run
+	if err := json.Unmarshal(body, &run); err != nil {
+		return nil, err
+	}
+
+	return &run, nil
 }
 
 func (rc *RunnerClient) updateRunStatus(runID string, status models.RunStatus, logs string) error {
@@ -480,10 +510,42 @@ func (rc *RunnerClient) ClaimRun(ctx context.Context) error {
 		return nil
 	}
 
+	if run.Status == models.StatusCanceled {
+		log.Printf("Run %s is canceled, not executing", run.ID)
+		return nil
+	}
+
 	stack, err := rc.getStack(run.StackID)
 	if err != nil {
 		return err
 	}
+
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
+	go func() {
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-runCtx.Done():
+				return
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				updatedRun, err := rc.getAssignedRunByID(run.ID)
+				if err != nil || updatedRun == nil {
+					continue
+				}
+				if updatedRun.Status == models.StatusCanceled {
+					log.Printf("Run %s canceled, stopping execution", run.ID)
+					runCancel()
+					rc.updateRunStatus(run.ID, models.StatusFailed, "Canceled by user during execution")
+					return
+				}
+			}
+		}
+	}()
 
 	log.Printf("Running %s plan phase for run %s", run.Branch, run.ID)
 
@@ -527,7 +589,7 @@ func (rc *RunnerClient) ClaimRun(ctx context.Context) error {
 		log.Printf("Failed to update run status: %v", err)
 	}
 
-	planOutput, planFile, err := rc.runPlan(ctx, run, stack, gitFolder)
+	planOutput, planFile, err := rc.runPlan(runCtx, run, stack, gitFolder)
 	if err != nil {
 		errMsg := fmt.Sprintf("Plan failed: %v", err)
 		log.Printf("%s", errMsg)
@@ -573,6 +635,9 @@ func (rc *RunnerClient) ClaimRun(ctx context.Context) error {
 		case models.StatusRejected:
 			log.Printf("Run %s rejected", run.ID)
 			return nil
+		case models.StatusCanceled:
+			log.Printf("Run %s canceled", run.ID)
+			return nil
 		case models.StatusPending:
 		case models.StatusPlanned:
 			log.Printf("Run %s status: %s, waiting for approval", run.ID, run.Status)
@@ -595,7 +660,7 @@ approved:
 		log.Printf("Failed to update run status: %v", err)
 	}
 
-	applyOutput, err := rc.runApply(ctx, run, stack, planFile)
+	applyOutput, err := rc.runApply(runCtx, run, stack, planFile)
 	if err != nil {
 		errMsg := fmt.Sprintf("Apply failed: %v", err)
 		log.Printf("%s", errMsg)

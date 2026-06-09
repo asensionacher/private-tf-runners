@@ -112,6 +112,7 @@ const (
 	StatusRejected  RunStatus = "rejected"
 	StatusPlanned   RunStatus = "planned"
 	StatusApplied   RunStatus = "applied"
+	StatusCanceled  RunStatus = "canceled"
 )
 
 type RunPhase string

@@ -474,7 +474,7 @@ func (h *RunnerHandler) RejectRun(c *gin.Context) {
 		return
 	}
 
-	if (run.Status != models.StatusPending && run.Status != models.StatusRunning) || run.Phase != models.PhasePlan {
+	if (run.Status != models.StatusPending && run.Status != models.StatusRunning && run.Status != models.StatusPlanned) || run.Phase != models.PhasePlan {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error: "Run is not awaiting plan approval",
 			Code:  "INVALID_STATUS",
@@ -497,6 +497,51 @@ func (h *RunnerHandler) RejectRun(c *gin.Context) {
 	h.logAudit(c, claims, "reject", "run", runID, "Run rejected")
 
 	c.JSON(http.StatusOK, gin.H{"message": "Run rejected successfully"})
+}
+
+func (h *RunnerHandler) CancelRun(c *gin.Context) {
+	runID := c.Param("id")
+
+	run, err := h.db.Run().GetByID(runID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, models.ErrorResponse{
+				Error: "Run not found",
+				Code:  "RUN_NOT_FOUND",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Error: "Failed to retrieve run",
+			Code:  "INTERNAL_ERROR",
+		})
+		return
+	}
+
+	if run.Status != models.StatusPending && run.Status != models.StatusRunning && run.Status != models.StatusApproved && run.Status != models.StatusPlanned {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error: "Run cannot be canceled",
+			Code:  "INVALID_STATUS",
+		})
+		return
+	}
+
+	if run.RunnerID != "" {
+		h.db.Runner().UpdateStatus(run.RunnerID, models.RunnerStatusOnline, "")
+	}
+
+	if err := h.db.Run().Finish(runID, models.StatusCanceled, "Canceled by user"); err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Error: "Failed to cancel run",
+			Code:  "INTERNAL_ERROR",
+		})
+		return
+	}
+
+	claims := middleware.GetClaims(c)
+	h.logAudit(c, claims, "cancel", "run", runID, "Run canceled")
+
+	c.JSON(http.StatusOK, gin.H{"message": "Run canceled successfully"})
 }
 
 func (h *RunnerHandler) UpdatePlanOutput(c *gin.Context) {
@@ -842,7 +887,7 @@ func (h *RunnerHandler) WaitForRun(c *gin.Context) {
 
 func isTerminalStatus(status models.RunStatus) bool {
 	switch status {
-	case models.StatusApplied, models.StatusFailed, models.StatusRejected:
+	case models.StatusApplied, models.StatusFailed, models.StatusRejected, models.StatusCanceled:
 		return true
 	default:
 		return false

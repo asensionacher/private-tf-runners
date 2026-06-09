@@ -117,7 +117,7 @@ func (db *DB) migrate() error {
 			trigger_type TEXT NOT NULL CHECK(trigger_type IN ('manual', 'push', 'schedule')),
 			branch TEXT NOT NULL,
 			commit_sha TEXT NOT NULL,
-			status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'running', 'success', 'failed', 'approved', 'planned', 'applied', 'rejected')),
+			status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'running', 'success', 'failed', 'approved', 'planned', 'applied', 'rejected', 'canceled')),
 			phase TEXT DEFAULT 'plan' CHECK(phase IN ('plan', 'apply', 'finish')),
 			logs TEXT DEFAULT '',
 			plan_output TEXT DEFAULT '',

@@ -170,6 +170,10 @@ export const runs = {
     await api.post(`/runs/${runId}/reject`);
   },
 
+  cancel: async (runId: string): Promise<void> => {
+    await api.post(`/runs/${runId}/cancel`);
+  },
+
   wait: async (runId: string, timeout = 30): Promise<Run> => {
     const response = await api.get<Run>(`/runs/${runId}/wait`, {
       params: { timeout },

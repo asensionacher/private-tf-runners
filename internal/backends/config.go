@@ -280,8 +280,8 @@ var HTTP = BackendSchema{
 		{Key: "address", Description: "The address of the REST endpoint", Required: true, EnvVar: "TF_HTTP_ADDRESS"},
 	},
 	OptionalFields: []Field{
-		{Key: "update_method", Description: "HTTP method to use when updating state", Required: false, Default: "POST", EnvVar: "TF_HTTP_UPDATE_METHOD"},
 		{Key: "lock_address", Description: "The address of the lock REST endpoint", Required: false, EnvVar: "TF_HTTP_LOCK_ADDRESS"},
+		{Key: "lock_method", Description: "HTTP method to use when locking", Required: false, Default: "LOCK", EnvVar: "TF_HTTP_LOCK_METHOD"},
 		{Key: "unlock_address", Description: "The address of the unlock REST endpoint", Required: false, EnvVar: "TF_HTTP_UNLOCK_ADDRESS"},
 		{Key: "unlock_method", Description: "HTTP method to use when unlocking", Required: false, Default: "UNLOCK", EnvVar: "TF_HTTP_UNLOCK_METHOD"},
 		{Key: "skip_cert_verification", Description: "Whether to skip TLS verification", Required: false, Default: "false"},

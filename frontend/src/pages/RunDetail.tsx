@@ -189,10 +189,11 @@ export default function RunDetail() {
           </svg>
           Back
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="page-title">Run Details</h1>
           <p className="text-muted text-sm mt-1">ID: {run.id}</p>
         </div>
+        
       </div>
 
       <div className="grid grid-cols-2 gap-4">
